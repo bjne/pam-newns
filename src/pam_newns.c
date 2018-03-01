@@ -83,17 +83,6 @@ out_error:
 	return -1;
 }
 
-int _pam_error(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-	syslog(LOG_AUTH|LOG_DEBUG, format, args);
-	va_end(args);
-
-	return PAM_SESSION_ERR;
-}
-
 /*
 	{
 	  "home": "127.0.0.1/home/bfa1a880-0e9a-447c-94b3-cdbb39fbfde8"
