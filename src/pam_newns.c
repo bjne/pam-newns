@@ -24,7 +24,7 @@ extern int pivot_root(const char * new_root, const char * put_old);
 
 #define _pam_err(...)                                                          \
 	do {                                                                       \
-		if ((flags & PAM_SILENT) == 0)                                         \
+		if (!(flags & PAM_SILENT))                                             \
 			pam_syslog(pamh, LOG_ERR, __VA_ARGS__);                            \
                                                                                \
 		goto pam_done;                                                         \
@@ -157,10 +157,10 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh,
 	if (sethostname(username, strlen(username)))
 		_pam_err("sethostname: %s", strerror(errno));
 
-	if ((oldroot = open("/", O_DIRECTORY | O_RDONLY)) < 0)
+	if ((oldroot = open("/", O_DIRECTORY | O_RDONLY)) == -1)
 		_pam_err("open oldroot: %s", strerror(errno));
 
-	if ((newroot = open("/mnt", O_DIRECTORY | O_RDONLY)) < 0)
+	if ((newroot = open("/mnt", O_DIRECTORY | O_RDONLY)) == -1)
 		_pam_err("open newroot: %s", strerror(errno));
 
 	/* change into new root */
@@ -181,14 +181,14 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh,
 	if (cp("/etc/passwd", "/mnt/tmp/passwd"))
 		_pam_err("cp /etc/passwd: %s", strerror(errno));
 
-	if ((f = fopen("/mnt/tmp/passwd", "a")) == NULL)
+	if (!(f = fopen("/mnt/tmp/passwd", "a")))
 		_pam_err("open /etc/passwd: %s", strerror(errno));
 
 	if (fprintf(f, "%s:x:%d:%d:%s:%s:%s\n", pw->pw_name, pw->pw_uid,
 	        pw->pw_gid, pw->pw_gecos, pw->pw_dir, pw->pw_shell) < 0)
 		_pam_err("write to /etc/passwd: %s", strerror(errno));
 
-	if (fclose(f) != 0)
+	if (fclose(f))
 		_pam_err("write to /etc/passwd: %s", strerror(errno));
 
 	if (mount("/mnt/tmp/passwd", "/etc/passwd", NULL, MS_BIND | MS_RDONLY, NULL))
@@ -201,13 +201,13 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh,
 	if (cp("/etc/group", "/mnt/tmp/group"))
 		_pam_err("cp /etc/group: %s", strerror(errno));
 
-	if ((f = fopen("/mnt/tmp/group", "a")) == NULL)
+	if (!(f = fopen("/mnt/tmp/group", "a")))
 		_pam_err("open /etc/group: %s", strerror(errno));
 
 	if (fprintf(f, "%s:x:%d:\n", gr->gr_name, gr->gr_gid) < 0)
 		_pam_err("write to /etc/group: %s", strerror(errno));
 
-	if (fclose(f) != 0)
+	if (fclose(f))
 		_pam_err("write to /etc/group: %s", strerror(errno));
 
 	if (mount("/mnt/tmp/group", "/etc/group", NULL, MS_BIND | MS_RDONLY, NULL))
